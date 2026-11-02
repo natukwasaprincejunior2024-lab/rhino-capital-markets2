@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { BellRing, Loader2, Plus, X } from 'lucide-react';
 import AlertFormModal from '@/components/AlertFormModal';
+import BillingModal from '@/components/BillingModal';
+import { useAuth } from '@/lib/auth-context';
+import { alertLimit } from '@/lib/billing-api';
 import { formatPrice, type Instrument } from '@/lib/market-data';
 import type { NewPriceAlert, PriceAlert } from '@/lib/alerts-api';
 
@@ -14,9 +17,15 @@ interface AlertsPanelProps {
 }
 
 export default function AlertsPanel({ instruments, alerts, loading, error, onAdd, onRemove }: AlertsPanelProps) {
+  const { billing } = useAuth();
   const [formOpen, setFormOpen] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const limit = billing ? alertLimit(billing) : 0;
+  const activeCount = alerts.filter((a) => !a.triggeredAt).length;
+  const atLimit = limit !== null && activeCount >= limit;
 
   const decimalsFor = (symbol: string): number => instruments.find((i) => i.symbol === symbol)?.decimals ?? 4;
 
@@ -38,10 +47,15 @@ export default function AlertsPanel({ instruments, alerts, loading, error, onAdd
         <div>
           <h2 className="text-base font-bold text-fg">Price alerts</h2>
           <p className="mt-1 text-xs text-muted">Alerts appear in your notifications when a price reaches the target.</p>
+          {limit !== null && (
+            <p className="mt-2 text-xs font-semibold tabular-nums text-muted">
+              {activeCount} of {limit} active alerts used
+            </p>
+          )}
         </div>
         <button
           type="button"
-          onClick={() => setFormOpen(true)}
+          onClick={() => (atLimit ? setShowUpgrade(true) : setFormOpen(true))}
           disabled={instruments.length === 0}
           className="inline-flex h-9 items-center gap-2 rounded-lg border border-brand/60 bg-brand/10 px-3.5 text-xs font-semibold text-brand transition-all duration-200 hover:bg-brand/20 disabled:opacity-40"
         >
@@ -88,6 +102,7 @@ export default function AlertsPanel({ instruments, alerts, loading, error, onAdd
       )}
 
       {formOpen && <AlertFormModal instruments={instruments} onSave={onAdd} onClose={() => setFormOpen(false)} />}
+      {showUpgrade && <BillingModal reason="alerts" onClose={() => setShowUpgrade(false)} />}
     </section>
   );
 }

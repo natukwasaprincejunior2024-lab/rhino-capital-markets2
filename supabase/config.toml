@@ -1,2 +1,8 @@
 [functions.display-board]
 verify_jwt = false
+
+[functions.billing-checkout]
+verify_jwt = false
+
+[functions.billing-webhook]
+verify_jwt = false

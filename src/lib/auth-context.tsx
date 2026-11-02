@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { fetchBillingStatus, type BillingStatus } from '@/lib/billing-api';
 
 const TRIAL_DAYS = 7;
 const DAY_MS = 86400000;
@@ -16,6 +17,10 @@ interface AuthContextValue {
   trialEndsAt: Date | null;
   trialDaysLeft: number;
   isTrialActive: boolean;
+  billing: BillingStatus | null;
+  isPro: boolean;
+  isElite: boolean;
+  refreshBilling: () => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<AuthResult>;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
@@ -39,6 +44,7 @@ function friendlyError(message: string): string {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [billing, setBilling] = useState<BillingStatus | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -66,6 +72,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
   const trialDaysLeft = trialEndsAt ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / DAY_MS)) : 0;
   const isTrialActive = trialDaysLeft > 0;
+  const userId = user?.id ?? null;
+
+  const refreshBilling = useCallback(async () => {
+    try {
+      setBilling(await fetchBillingStatus());
+    } catch {
+      setBilling(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!userId) {
+      setBilling(null);
+      return;
+    }
+    void refreshBilling();
+  }, [userId, refreshBilling]);
+
+  useEffect(() => {
+    if (!userId || new URLSearchParams(window.location.search).get('billing') !== 'success') return;
+    window.history.replaceState(null, '', window.location.pathname);
+    const retry = setTimeout(() => void refreshBilling(), 3000);
+    return () => clearTimeout(retry);
+  }, [userId, refreshBilling]);
 
   const signUp = useCallback(async (name: string, email: string, password: string): Promise<AuthResult> => {
     const { data, error } = await supabase.auth.signUp({
@@ -88,8 +118,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, loading, trialEndsAt, trialDaysLeft, isTrialActive, signUp, signIn, signOut }),
-    [user, loading, trialEndsAt, trialDaysLeft, isTrialActive, signUp, signIn, signOut]
+    () => ({
+      user,
+      loading,
+      trialEndsAt,
+      trialDaysLeft,
+      isTrialActive,
+      billing,
+      isPro: billing?.isPro ?? false,
+      isElite: billing?.isElite ?? false,
+      refreshBilling,
+      signUp,
+      signIn,
+      signOut,
+    }),
+    [user, loading, trialEndsAt, trialDaysLeft, isTrialActive, billing, refreshBilling, signUp, signIn, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

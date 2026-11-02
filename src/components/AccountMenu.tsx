@@ -3,7 +3,7 @@ import { ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
 export default function AccountMenu() {
-  const { user, trialDaysLeft, isTrialActive, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -30,13 +30,6 @@ export default function AccountMenu() {
 
   return (
     <div className="flex items-center gap-3">
-      <span
-        className={`hidden whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold md:inline-flex ${
-          isTrialActive ? 'border-brand/50 bg-brand/10 text-gold' : 'border-down/50 bg-down/10 text-down'
-        }`}
-      >
-        {isTrialActive ? `Trial: ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} left` : 'Trial ended'}
-      </span>
 
       <div ref={ref} className="relative">
         <button

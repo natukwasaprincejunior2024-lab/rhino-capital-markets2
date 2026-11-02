@@ -20,13 +20,17 @@ export function reportToCsv(report: DailyReport): string {
   return [header, ...lines].map((line) => line.map(csvCell).join(',')).join('\n');
 }
 
-export function downloadCsv(filename: string, content: string): void {
-  const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' }));
+export function downloadBlob(filename: string, blob: Blob): void {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+export function downloadCsv(filename: string, content: string): void {
+  downloadBlob(filename, new Blob([content], { type: 'text/csv;charset=utf-8' }));
 }
 
 export function reportToShareText(report: DailyReport, bureauName: string): string {

@@ -4,6 +4,14 @@
     "display-board": {
       "hasChanged": false,
       "hash": "1a166688286292286f4eace9f4be804f93c462e2f540fd9fa720a57f7a36bc14"
+    },
+    "billing-checkout": {
+      "hasChanged": false,
+      "hash": "b0ac3b09043c93dc0918e6c7e0d599efe96a9908a4a5b202a848fca73fa5d5eb"
+    },
+    "billing-webhook": {
+      "hasChanged": false,
+      "hash": "c23d4e9eefd50f3cf7b38dd5a645ba21b28a96b3cdf1b42aa93e915cf1b16d51"
     }
   }
 }

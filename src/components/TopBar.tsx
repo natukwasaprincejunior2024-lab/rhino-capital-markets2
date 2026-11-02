@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Landmark, Search, X } from 'lucide-react';
 import AccountMenu from '@/components/AccountMenu';
 import NotificationsMenu from '@/components/NotificationsMenu';
+import PlanStatus from '@/components/PlanStatus';
 import ThemeChanger from '@/components/ThemeChanger';
 import { formatPrice, searchInstruments, INSTRUMENTS, type Instrument } from '@/lib/market-data';
 import type { NotificationCenter } from '@/lib/use-notifications';
@@ -90,6 +91,7 @@ export default function TopBar({ search, onSearchChange, notifications }: TopBar
         <div className="ml-auto flex items-center gap-3">
           <NotificationsMenu center={notifications} />
           <ThemeChanger />
+          <PlanStatus />
           <AccountMenu />
         </div>
       </div>
