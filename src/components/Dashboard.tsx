@@ -8,7 +8,10 @@ import PortfolioTab from '@/components/PortfolioTab';
 import TickerBanner from '@/components/TickerBanner';
 import TopBar from '@/components/TopBar';
 import type { PriceAlert } from '@/lib/alerts-api';
+import { useAuth } from '@/lib/auth-context';
 import { formatPrice, INSTRUMENTS_BY_SYMBOL } from '@/lib/market-data';
+import { planLimits } from '@/lib/plan-limits';
+import { useDelayedQuotes } from '@/lib/use-delayed-quotes';
 import { useLiveMarkets } from '@/lib/use-live-markets';
 import { useNotifications } from '@/lib/use-notifications';
 import { usePriceAlerts } from '@/lib/use-price-alerts';
@@ -26,6 +29,10 @@ const SECTIONS: { id: Section; label: string }[] = [
 
 export default function Dashboard() {
   const instruments = useLiveMarkets();
+  const { billing } = useAuth();
+  const limits = planLimits(billing);
+  const delayedQuotes = useDelayedQuotes(instruments, limits.priceDelayMs);
+  const quotes = limits.pairLimit === null ? delayedQuotes : delayedQuotes.slice(0, limits.pairLimit);
   const watchlist = useWatchlist();
   const notifications = useNotifications();
   const { notify } = notifications;
@@ -61,7 +68,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-bg text-fg">
       <div className="sticky top-0 z-40">
-        <TickerBanner instruments={instruments} />
+        <TickerBanner instruments={quotes} />
         <TopBar search={search} onSearchChange={setSearch} notifications={notifications} />
       </div>
       <MarketStatusBar instruments={instruments} />
@@ -88,14 +95,16 @@ export default function Dashboard() {
 
         {section === 'markets' && (
           <LiveMarketsTab
-            instruments={instruments}
+            instruments={quotes}
+            hiddenCount={instruments.length - quotes.length}
+            limits={limits}
             search={search}
             watchlist={watchlist.symbols}
             watchlistError={watchlist.error}
             onToggleWatch={(symbol) => void watchlist.toggle(symbol)}
           />
         )}
-        {section === 'charts' && <ChartsTab instruments={instruments} />}
+        {section === 'charts' && <ChartsTab instruments={quotes} limits={limits} />}
         {section === 'analytics' && <AnalyticsTab instruments={instruments} />}
         {section === 'portfolio' && <PortfolioTab instruments={instruments} alerts={alerts} />}
         {section === 'bureau' && <BureauTab instruments={instruments} />}

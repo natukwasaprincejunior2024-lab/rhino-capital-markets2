@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import MarketTable from '@/components/MarketTable';
 import { changePercent, searchInstruments, type Instrument } from '@/lib/market-data';
+import type { PlanLimits } from '@/lib/plan-limits';
 
 type FilterId =
   | 'all'
@@ -31,6 +32,8 @@ const FILTERS: { id: FilterId; label: string }[] = [
 
 interface LiveMarketsTabProps {
   instruments: Instrument[];
+  hiddenCount: number;
+  limits: PlanLimits;
   search: string;
   watchlist: ReadonlySet<string>;
   watchlistError: string | null;
@@ -55,6 +58,8 @@ function applyFilter(list: Instrument[], filter: FilterId, watchlist: ReadonlySe
 
 export default function LiveMarketsTab({
   instruments,
+  hiddenCount,
+  limits,
   search,
   watchlist,
   watchlistError,
@@ -84,6 +89,20 @@ export default function LiveMarketsTab({
         </p>
       </div>
 
+      {hiddenCount > 0 && (
+        <div className="flex flex-col gap-3 rounded-xl border border-gold/40 bg-gold/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-fg">
+            Free plan: {instruments.length} pairs with prices delayed 15 seconds. {hiddenCount} more pairs are included in paid plans.
+          </p>
+          <a
+            href="/pricing"
+            className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-gold px-4 text-sm font-extrabold text-ink transition-all duration-200 hover:brightness-110"
+          >
+            See plans
+          </a>
+        </div>
+      )}
+
       {watchlistError && (
         <p className="rounded-lg border border-down/40 bg-down/10 px-4 py-3 text-sm text-down">
           {watchlistError}
@@ -112,7 +131,12 @@ export default function LiveMarketsTab({
         })}
       </div>
 
-      <MarketTable instruments={visible} watchlist={watchlist} onToggleWatch={onToggleWatch} />
+      <MarketTable
+        instruments={visible}
+        watchlist={watchlist}
+        onToggleWatch={onToggleWatch}
+        maxLeverage={limits.maxLeverage}
+      />
     </section>
   );
 }

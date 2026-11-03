@@ -12,6 +12,7 @@ interface MarketTableProps {
   instruments: Instrument[];
   watchlist: ReadonlySet<string>;
   onToggleWatch: (symbol: string) => void;
+  maxLeverage: number | null;
 }
 
 interface Flash {
@@ -30,7 +31,7 @@ function usePriceFlash(price: number): Flash | null {
   return flash;
 }
 
-export default function MarketTable({ instruments, watchlist, onToggleWatch }: MarketTableProps) {
+export default function MarketTable({ instruments, watchlist, onToggleWatch, maxLeverage }: MarketTableProps) {
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-card">
       <table className="w-full min-w-[720px] text-sm lg:min-w-[1000px]">
@@ -58,6 +59,7 @@ export default function MarketTable({ instruments, watchlist, onToggleWatch }: M
               instrument={i}
               watched={watchlist.has(i.symbol)}
               onToggleWatch={onToggleWatch}
+              maxLeverage={maxLeverage}
             />
           ))}
           {instruments.length === 0 && (
@@ -77,10 +79,12 @@ function MarketRow({
   instrument: i,
   watched,
   onToggleWatch,
+  maxLeverage,
 }: {
   instrument: Instrument;
   watched: boolean;
   onToggleWatch: (symbol: string) => void;
+  maxLeverage: number | null;
 }) {
   const flash = usePriceFlash(i.price);
   const flashClass = flash ? (flash.dir === 'up' ? 'animate-flash-up' : 'animate-flash-down') : '';
@@ -126,7 +130,7 @@ function MarketRow({
       <td className="hidden px-4 py-3 text-right tabular-nums text-muted md:table-cell">{formatPrice(i.low, i.decimals)}</td>
       <td className="hidden px-4 py-3 text-right tabular-nums text-muted lg:table-cell">{formatCompact(i.volume)}</td>
       <td className="hidden px-4 py-3 text-right tabular-nums text-muted lg:table-cell">{formatPrice(i.spread, i.decimals)}</td>
-      <td className="hidden px-4 py-3 text-right font-semibold tabular-nums text-gold lg:table-cell">{i.leverage}x</td>
+      <td className="hidden px-4 py-3 text-right font-semibold tabular-nums text-gold lg:table-cell">{maxLeverage === null ? i.leverage : Math.min(i.leverage, maxLeverage)}x</td>
       <td className="px-4 py-3 text-right tabular-nums text-fg">{formatPrice(i.buying, i.decimals)}</td>
       <td className="px-4 py-3 text-right tabular-nums text-fg">{formatPrice(i.selling, i.decimals)}</td>
     </tr>

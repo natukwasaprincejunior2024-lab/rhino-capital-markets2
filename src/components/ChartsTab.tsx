@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Lock } from 'lucide-react';
 import CandleChart from '@/components/CandleChart';
 import OrderPanel from '@/components/OrderPanel';
 import PriceChange from '@/components/PriceChange';
@@ -12,19 +13,25 @@ import {
   type Instrument,
   type Timeframe,
 } from '@/lib/market-data';
+import type { PlanLimits } from '@/lib/plan-limits';
 
 interface ChartsTabProps {
   instruments: Instrument[];
+  limits: PlanLimits;
 }
 
 const DEFAULT_SYMBOL = 'EUR/USD';
 
-export default function ChartsTab({ instruments }: ChartsTabProps) {
-  const [symbol, setSymbol] = useState(DEFAULT_SYMBOL);
+export default function ChartsTab({ instruments, limits }: ChartsTabProps) {
+  const [symbol, setSymbol] = useState(() =>
+    instruments.some((i) => i.symbol === DEFAULT_SYMBOL) ? DEFAULT_SYMBOL : (instruments[0]?.symbol ?? DEFAULT_SYMBOL),
+  );
   const [timeframe, setTimeframe] = useState<Timeframe>('1H');
   const [showEma, setShowEma] = useState(true);
   const [showBollinger, setShowBollinger] = useState(false);
   const [showRsi, setShowRsi] = useState(true);
+  const bollingerOn = showBollinger && limits.indicatorsUnlocked;
+  const rsiOn = showRsi && limits.indicatorsUnlocked;
 
   const live = instruments.find((i) => i.symbol === symbol) ?? instruments[0];
 
@@ -96,8 +103,18 @@ export default function ChartsTab({ instruments }: ChartsTabProps) {
 
       <div className="flex flex-wrap gap-2">
         <Toggle label="EMA 20" active={showEma} onToggle={() => setShowEma((v) => !v)} />
-        <Toggle label="Bollinger Bands" active={showBollinger} onToggle={() => setShowBollinger((v) => !v)} />
-        <Toggle label="RSI" active={showRsi} onToggle={() => setShowRsi((v) => !v)} />
+        <Toggle
+          label="Bollinger Bands"
+          active={bollingerOn}
+          locked={!limits.indicatorsUnlocked}
+          onToggle={() => setShowBollinger((v) => !v)}
+        />
+        <Toggle
+          label="RSI"
+          active={rsiOn}
+          locked={!limits.indicatorsUnlocked}
+          onToggle={() => setShowRsi((v) => !v)}
+        />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -107,11 +124,11 @@ export default function ChartsTab({ instruments }: ChartsTabProps) {
           candles={candles}
           decimals={live.decimals}
           showEma={showEma}
-          showBollinger={showBollinger}
+          showBollinger={bollingerOn}
         />
       </div>
 
-      {showRsi && (
+      {rsiOn && (
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
           <RsiPanel closes={closes} />
         </div>
@@ -125,7 +142,27 @@ export default function ChartsTab({ instruments }: ChartsTabProps) {
   );
 }
 
-function Toggle({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) {
+function Toggle({
+  label,
+  active,
+  locked = false,
+  onToggle,
+}: {
+  label: string;
+  active: boolean;
+  locked?: boolean;
+  onToggle: () => void;
+}) {
+  if (locked) {
+    return (
+      <a
+        href="/pricing"
+        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-dashed border-border px-3.5 text-xs font-semibold text-muted transition-colors duration-200 hover:border-gold/60 hover:text-gold"
+      >
+        <Lock size={12} /> {label} (Pro)
+      </a>
+    );
+  }
   return (
     <button
       type="button"
