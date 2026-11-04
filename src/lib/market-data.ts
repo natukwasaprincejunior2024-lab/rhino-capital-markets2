@@ -1,4 +1,6 @@
-export type AssetClass = 'forex' | 'crypto' | 'stock' | 'commodities' | 'bonds' | 'etfs' | 'africa';
+import { getCountryDetails } from '@/lib/countries';
+
+export type AssetClass = 'forex' | 'crypto' | 'stock' | 'commodities' | 'bonds' | 'etfs' | 'africa' | 'indices';
 
 export const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
   forex: 'Forex',
@@ -8,6 +10,7 @@ export const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
   bonds: 'Bond',
   etfs: 'ETF',
   africa: 'Africa',
+  indices: 'Index',
 };
 export type Timeframe = '1M' | '5M' | '15M' | '1H' | '4H' | '1D' | '1W' | '1M_TF';
 export type ImpactLevel = 'low' | 'medium' | 'high';
@@ -251,7 +254,49 @@ export const INSTRUMENTS: Instrument[] = [
 
   buildInstrument({ symbol: 'SPY', name: 'SPDR S&P 500 ETF', assetClass: 'etfs', flag: '🇺🇸', price: 475.3, changePct: 0.37, decimals: 2, currencyCode: 'USD', spread: 0.02, maxLeverage: 20, volume: 61000000 }),
   buildInstrument({ symbol: 'QQQ', name: 'Invesco QQQ Trust', assetClass: 'etfs', flag: '🇺🇸', price: 408.6, changePct: 0.58, decimals: 2, currencyCode: 'USD', spread: 0.02, maxLeverage: 20, volume: 38000000 }),
+
+  buildInstrument({ symbol: 'USD/PHP', name: 'Philippine Peso', assetClass: 'forex', flag: '🇵🇭', price: 58.25, changePct: 0.11, decimals: 2, currencyCode: 'PHP', spread: 0.15, maxLeverage: 100, volume: 45000000, buying: 58.15, selling: 58.35 }),
+  buildInstrument({ symbol: 'USD/INR', name: 'Indian Rupee', assetClass: 'forex', flag: '🇮🇳', price: 83.5, changePct: 0.06, decimals: 2, currencyCode: 'INR', spread: 0.05, maxLeverage: 100, volume: 310000000 }),
+  buildInstrument({ symbol: 'USD/AUD', name: 'US Dollar / Australian Dollar', assetClass: 'forex', flag: '🇦🇺', price: 1.52, changePct: -0.18, decimals: 4, currencyCode: 'AUD', spread: 0.0005, maxLeverage: 500, volume: 180000000 }),
+  buildInstrument({ symbol: 'USD/AED', name: 'UAE Dirham', assetClass: 'forex', flag: '🇦🇪', price: 3.67, changePct: 0, decimals: 4, currencyCode: 'AED', spread: 0.0002, maxLeverage: 100, volume: 40000000 }),
+  buildInstrument({ symbol: 'USD/BRL', name: 'Brazilian Real', assetClass: 'forex', flag: '🇧🇷', price: 5.2, changePct: 0.42, decimals: 4, currencyCode: 'BRL', spread: 0.005, maxLeverage: 100, volume: 62000000 }),
+  buildInstrument({ symbol: 'USD/PKR', name: 'Pakistani Rupee', assetClass: 'forex', flag: '🇵🇰', price: 278.5, changePct: 0.15, decimals: 2, currencyCode: 'PKR', spread: 0.2, maxLeverage: 50, volume: 9000000 }),
+  buildInstrument({ symbol: 'USD/BDT', name: 'Bangladeshi Taka', assetClass: 'forex', flag: '🇧🇩', price: 117, changePct: 0.09, decimals: 2, currencyCode: 'BDT', spread: 0.2, maxLeverage: 50, volume: 5200000 }),
+  buildInstrument({ symbol: 'USD/IDR', name: 'Indonesian Rupiah', assetClass: 'forex', flag: '🇮🇩', price: 16200, changePct: 0.22, decimals: 2, currencyCode: 'IDR', spread: 15, maxLeverage: 100, volume: 74000000 }),
+  buildInstrument({ symbol: 'USD/THB', name: 'Thai Baht', assetClass: 'forex', flag: '🇹🇭', price: 36.5, changePct: -0.08, decimals: 2, currencyCode: 'THB', spread: 0.02, maxLeverage: 100, volume: 28000000 }),
+  buildInstrument({ symbol: 'USD/MYR', name: 'Malaysian Ringgit', assetClass: 'forex', flag: '🇲🇾', price: 4.7, changePct: 0.12, decimals: 4, currencyCode: 'MYR', spread: 0.002, maxLeverage: 100, volume: 21000000 }),
+  buildInstrument({ symbol: 'USD/SGD', name: 'Singapore Dollar', assetClass: 'forex', flag: '🇸🇬', price: 1.32, changePct: -0.05, decimals: 4, currencyCode: 'SGD', spread: 0.0003, maxLeverage: 100, volume: 36000000 }),
+  buildInstrument({ symbol: 'USD/MXN', name: 'Mexican Peso', assetClass: 'forex', flag: '🇲🇽', price: 17.2, changePct: 0.38, decimals: 4, currencyCode: 'MXN', spread: 0.004, maxLeverage: 100, volume: 52000000 }),
+  buildInstrument({ symbol: 'NZD/USD', name: 'New Zealand Dollar / US Dollar', assetClass: 'forex', flag: '🇳🇿', price: 0.6105, changePct: 0.19, decimals: 5, currencyCode: 'NZD', spread: 0.00012, maxLeverage: 500, volume: 95000000 }),
+  buildInstrument({ symbol: 'USD/TRY', name: 'Turkish Lira', assetClass: 'forex', flag: '🇹🇷', price: 32.1, changePct: 0.7, decimals: 4, currencyCode: 'TRY', spread: 0.02, maxLeverage: 50, volume: 33000000 }),
+  buildInstrument({ symbol: 'USD/ZMW', name: 'Zambian Kwacha', assetClass: 'africa', flag: '🇿🇲', price: 26.4, changePct: 0.31, decimals: 4, currencyCode: 'ZMW', spread: 0.05, maxLeverage: 50, volume: 1100000 }),
+  buildInstrument({ symbol: 'USD/ETB', name: 'Ethiopian Birr', assetClass: 'africa', flag: '🇪🇹', price: 56.2, changePct: 0.25, decimals: 2, currencyCode: 'ETB', spread: 0.1, maxLeverage: 50, volume: 800000 }),
+
+  buildInstrument({ symbol: 'MTNU', name: 'MTN Uganda', assetClass: 'stock', flag: '🇺🇬', price: 1720, changePct: 0.58, decimals: 0, currencyCode: 'UGX', spread: 5, maxLeverage: 20, volume: 2400000 }),
+  buildInstrument({ symbol: 'MTNN', name: 'MTN Nigeria', assetClass: 'stock', flag: '🇳🇬', price: 240, changePct: 1.27, decimals: 2, currencyCode: 'NGN', spread: 0.2, maxLeverage: 20, volume: 6800000 }),
+  buildInstrument({ symbol: 'SCOM', name: 'Safaricom', assetClass: 'stock', flag: '🇰🇪', price: 19, changePct: -0.52, decimals: 2, currencyCode: 'KES', spread: 0.05, maxLeverage: 20, volume: 9100000 }),
+  buildInstrument({ symbol: 'AAF', name: 'Airtel Africa', assetClass: 'stock', flag: '🇬🇧', price: 120, changePct: 0.84, decimals: 2, currencyCode: 'GBX', spread: 0.1, maxLeverage: 20, volume: 3300000 }),
+
+  buildInstrument({ symbol: 'NASDAQ Composite', name: 'NASDAQ Composite', assetClass: 'indices', flag: '🇺🇸', price: 16500, changePct: 0.74, decimals: 2, currencyCode: 'USD', spread: 1, maxLeverage: 20, volume: 5200000000 }),
+  buildInstrument({ symbol: 'ASX 200', name: 'S&P/ASX 200', assetClass: 'indices', flag: '🇦🇺', price: 7600, changePct: 0.31, decimals: 2, currencyCode: 'AUD', spread: 1, maxLeverage: 20, volume: 980000000 }),
+  buildInstrument({ symbol: 'Nifty 50', name: 'NIFTY 50', assetClass: 'indices', flag: '🇮🇳', price: 22100, changePct: 0.45, decimals: 2, currencyCode: 'INR', spread: 2, maxLeverage: 20, volume: 720000000 }),
+  buildInstrument({ symbol: 'PSEi', name: 'Philippine Stock Exchange Index', assetClass: 'indices', flag: '🇵🇭', price: 6850, changePct: -0.21, decimals: 2, currencyCode: 'PHP', spread: 1, maxLeverage: 20, volume: 210000000 }),
+  buildInstrument({ symbol: 'USE ALSI', name: 'Uganda Securities Exchange All-Share', assetClass: 'indices', flag: '🇺🇬', price: 2000, changePct: 0.12, decimals: 2, currencyCode: 'UGX', spread: 1, maxLeverage: 10, volume: 1800000 }),
+  buildInstrument({ symbol: 'NSE 20', name: 'Nairobi Securities Exchange 20', assetClass: 'indices', flag: '🇰🇪', price: 150, changePct: -0.36, decimals: 2, currencyCode: 'KES', spread: 0.2, maxLeverage: 10, volume: 3500000 }),
+  buildInstrument({ symbol: 'DFM', name: 'Dubai Financial Market General', assetClass: 'indices', flag: '🇦🇪', price: 4000, changePct: 0.27, decimals: 2, currencyCode: 'AED', spread: 1, maxLeverage: 10, volume: 430000000 }),
+  buildInstrument({ symbol: 'Bovespa', name: 'Ibovespa', assetClass: 'indices', flag: '🇧🇷', price: 128000, changePct: 0.63, decimals: 0, currencyCode: 'BRL', spread: 10, maxLeverage: 20, volume: 16000000000 }),
+  buildInstrument({ symbol: 'TSX', name: 'S&P/TSX Composite', assetClass: 'indices', flag: '🇨🇦', price: 21500, changePct: 0.18, decimals: 2, currencyCode: 'CAD', spread: 2, maxLeverage: 20, volume: 410000000 }),
+  buildInstrument({ symbol: 'FTSE 100', name: 'FTSE 100', assetClass: 'indices', flag: '🇬🇧', price: 7700, changePct: 0.22, decimals: 2, currencyCode: 'GBP', spread: 1, maxLeverage: 20, volume: 860000000 }),
+  buildInstrument({ symbol: 'DAX', name: 'DAX Performance Index', assetClass: 'indices', flag: '🇩🇪', price: 17500, changePct: 0.4, decimals: 2, currencyCode: 'EUR', spread: 2, maxLeverage: 20, volume: 290000000 }),
+  buildInstrument({ symbol: 'Nikkei 225', name: 'Nikkei 225', assetClass: 'indices', flag: '🇯🇵', price: 39000, changePct: 0.52, decimals: 0, currencyCode: 'JPY', spread: 5, maxLeverage: 20, volume: 2100000000 }),
 ];
+
+const EXTRA_COUNTRY_SYMBOLS: Partial<Record<string, string[]>> = {
+  UG: ['MTNU'],
+  NG: ['MTNN'],
+  KE: ['SCOM'],
+  GB: ['AAF'],
+};
 
 export const INSTRUMENTS_BY_SYMBOL: Record<string, Instrument> = Object.fromEntries(
   INSTRUMENTS.map((i) => [i.symbol, i])
@@ -259,6 +304,27 @@ export const INSTRUMENTS_BY_SYMBOL: Record<string, Instrument> = Object.fromEntr
 
 export function getInstrumentsByClass(assetClass: AssetClass): Instrument[] {
   return INSTRUMENTS.filter((i) => i.assetClass === assetClass);
+}
+
+export function getInstrumentsForCountry(code: string): Instrument[] {
+  const country = getCountryDetails(code);
+  const symbols = [
+    country.forexPair,
+    country.marketIndex,
+    ...(EXTRA_COUNTRY_SYMBOLS[country.code] ?? []),
+    'NASDAQ Composite',
+  ];
+  return [...new Set(symbols)]
+    .map((symbol) => (symbol ? INSTRUMENTS_BY_SYMBOL[symbol] : undefined))
+    .filter((i): i is Instrument => Boolean(i));
+}
+
+export function getCurrencyForCountry(code: string): string {
+  return getCountryDetails(code).currency;
+}
+
+export function formatCurrencyForCountry(amount: number, code: string): string {
+  return formatCurrency(amount, getCurrencyForCountry(code));
 }
 
 export function searchInstruments(list: Instrument[], query: string): Instrument[] {
