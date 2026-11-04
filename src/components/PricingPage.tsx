@@ -1,11 +1,14 @@
 import { useState, type ReactNode } from 'react';
-import { ArrowLeft, Check, Crown, Flame, Landmark, Loader2, Star } from 'lucide-react';
+import { ArrowLeft, Check, Crown, Flame, Landmark, Loader2, Smartphone, Star } from 'lucide-react';
+import Modal from '@/components/Modal';
+import MomoPaymentForm, { type MomoOrder } from '@/components/MomoPaymentForm';
 import PricingComparison from '@/components/PricingComparison';
 import { useAuth } from '@/lib/auth-context';
 import { startCheckout, type ProductKey } from '@/lib/billing-api';
 import {
   DISPLAY_HOUR,
   FREE_FEATURES,
+  MOMO_PRICES_UGX,
   PAID_PLANS,
   PRINT_PACKS,
   type PaidPlan,
@@ -20,6 +23,11 @@ export default function PricingPage() {
   const [selected, setSelected] = useState<PaidPlanId>('monthly');
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [momoOrder, setMomoOrder] = useState<MomoOrder | null>(null);
+
+  const orderWithMomo = (product: ProductKey, label: string) => {
+    setMomoOrder({ product, quantity: 1, amountUgx: MOMO_PRICES_UGX[product], label });
+  };
 
   const currentPlan = billing?.isPro ? billing.plan : 'free';
   const trialEnd = billing?.trialEndsAt && isTrialActive
@@ -120,6 +128,7 @@ export default function PricingPage() {
                 disabled={busyKey !== null}
                 onSelect={() => setSelected(plan.id)}
                 onBuy={() => void buy(plan.id, `plan-${plan.id}`)}
+                onPayMomo={() => orderWithMomo(plan.id, `${plan.label} plan`)}
               />
             ))}
           </div>
@@ -140,6 +149,7 @@ export default function PricingPage() {
                 busy={busyKey === pack.product}
                 disabled={busyKey !== null}
                 onBuy={() => void buy(pack.product, pack.product)}
+                onPayMomo={() => orderWithMomo(pack.product, `${pack.prints} ${pack.prints === 1 ? 'print' : 'prints'}`)}
               />
             ))}
             <PayAsYouGoCard
@@ -149,6 +159,7 @@ export default function PricingPage() {
               busy={busyKey === 'display_hour'}
               disabled={busyKey !== null}
               onBuy={() => void buy('display_hour', 'display_hour')}
+              onPayMomo={() => orderWithMomo('display_hour', '1 hour of display time')}
             />
           </div>
           {!user && (
@@ -161,9 +172,15 @@ export default function PricingPage() {
         <PricingComparison />
 
         <p className="text-center text-xs text-muted">
-          Prices are in US dollars. Local amounts are approximate. Payments are processed securely by Stripe.
+          Prices are in US dollars. Local amounts are approximate. Card payments are processed securely by Stripe. MTN MoMo payments are confirmed by our team.
         </p>
       </main>
+
+      {momoOrder && (
+        <Modal title="Pay with MTN MoMo" onClose={() => setMomoOrder(null)} widthClass="max-w-lg">
+          <MomoPaymentForm order={momoOrder} onDone={() => setMomoOrder(null)} />
+        </Modal>
+      )}
     </div>
   );
 }
@@ -186,9 +203,10 @@ interface PlanCardProps {
   disabled: boolean;
   onSelect: () => void;
   onBuy: () => void;
+  onPayMomo: () => void;
 }
 
-function PlanCard({ plan, highlighted, isCurrent, signedIn, busy, disabled, onSelect, onBuy }: PlanCardProps) {
+function PlanCard({ plan, highlighted, isCurrent, signedIn, busy, disabled, onSelect, onBuy, onPayMomo }: PlanCardProps) {
   const BadgeIcon = plan.badge ? BADGE_ICON[plan.badge] : null;
   const isMonthly = plan.id === 'monthly';
 
@@ -203,15 +221,25 @@ function PlanCard({ plan, highlighted, isCurrent, signedIn, busy, disabled, onSe
     );
   } else {
     cta = (
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onBuy}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand py-2.5 text-sm font-extrabold text-ink transition-all duration-200 hover:brightness-110 disabled:opacity-60"
-      >
-        {busy && <Loader2 size={16} className="animate-spin" />}
-        Choose {plan.label}
-      </button>
+      <div className="space-y-2">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={onBuy}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand py-2.5 text-sm font-extrabold text-ink transition-all duration-200 hover:brightness-110 disabled:opacity-60"
+        >
+          {busy && <Loader2 size={16} className="animate-spin" />}
+          Choose {plan.label}
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={onPayMomo}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-fg transition-colors duration-200 hover:border-brand hover:text-brand disabled:opacity-60"
+        >
+          <Smartphone size={16} /> Pay with MoMo
+        </button>
+      </div>
     );
   }
 
@@ -252,9 +280,10 @@ interface PayAsYouGoCardProps {
   busy: boolean;
   disabled: boolean;
   onBuy: () => void;
+  onPayMomo: () => void;
 }
 
-function PayAsYouGoCard({ title, price, detail, busy, disabled, onBuy }: PayAsYouGoCardProps) {
+function PayAsYouGoCard({ title, price, detail, busy, disabled, onBuy, onPayMomo }: PayAsYouGoCardProps) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
       <p className="text-sm font-semibold text-muted">{title}</p>
@@ -268,6 +297,14 @@ function PayAsYouGoCard({ title, price, detail, busy, disabled, onBuy }: PayAsYo
       >
         {busy && <Loader2 size={14} className="animate-spin" />}
         Buy
+      </button>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onPayMomo}
+        className="inline-flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold text-muted transition-colors duration-200 hover:text-brand disabled:opacity-60"
+      >
+        <Smartphone size={14} /> Pay with MoMo
       </button>
     </div>
   );

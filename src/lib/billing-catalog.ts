@@ -106,6 +106,23 @@ export const DISPLAY_HOUR = { price: '$0.10', ugx: 'UGX 370' } as const;
 
 export const DISPLAY_HOUR_OPTIONS = [1, 2, 4, 8] as const;
 
+export const MOMO_MERCHANT = {
+  number: '0783554841',
+  merchantCode: '074583',
+  name: 'NATUKWASA LINDON - RHINO CAPITAL MARKETS',
+} as const;
+
+export const MOMO_PRICES_UGX: Record<ProductKey, number> = {
+  print_1: 370,
+  print_10: 2960,
+  print_50: 11100,
+  display_hour: 370,
+  daily: 7400,
+  weekly: 22200,
+  monthly: 37000,
+  yearly: 296000,
+};
+
 export const PLAN_LABELS: Record<'free' | PaidPlanId, string> = {
   free: 'Free',
   daily: 'Daily',
